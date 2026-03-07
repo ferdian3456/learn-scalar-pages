@@ -1,0 +1,116 @@
+openapi: 3.0.0
+info:
+  title: Order Service API
+  version: 1.0.0
+
+paths:
+  /orders:
+    post:
+      summary: Create new order
+      tags:
+        - orders
+      description: |
+        ## Create Order Flow
+
+        ### Business Logic
+        1. Validasi request payload
+        2. Cek stok di `inventory_service` — return `422` kalau kurang
+        3. Cek apakah user punya active order:
+           - Kalau ada → append item ke order existing
+           - Kalau tidak → buat order baru
+        4. Kurangi stok dengan optimistic lock
+        5. Push ke `payment_queue` untuk diproses async
+
+        ### Edge Cases
+        - Kalau `payment_queue` down → order tetap dibuat, status = `PENDING_PAYMENT`
+        - Kalau stok berkurang saat proses → return `409 Conflict`
+
+        ### Flow
+```
+        Request → StockService → OrderService → PaymentQueue → Response
+```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            example:
+              user_id: "usr_123"
+              items:
+                - product_id: "prod_456"
+                  quantity: 2
+      responses:
+        '201':
+          description: Order berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              example:
+                order_id: "ord_789"
+                status: "PENDING_PAYMENT"
+                total: 150000
+        '409':
+          description: Stok berubah saat proses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "STOCK_CONFLICT"
+                message: "Stok berubah saat proses, silakan coba lagi"
+        '422':
+          description: Stok tidak cukup
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "INSUFFICIENT_STOCK"
+                message: "Stok produk prod_456 tidak mencukupi"
+
+components:
+  schemas:
+    CreateOrderRequest:
+      type: object
+      required:
+        - user_id
+        - items
+      properties:
+        user_id:
+          type: string
+          description: ID user yang membuat order
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - product_id
+              - quantity
+            properties:
+              product_id:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+
+    OrderResponse:
+      type: object
+      properties:
+        order_id:
+          type: string
+        status:
+          type: string
+          enum: [PENDING_PAYMENT, PROCESSING, COMPLETED, CANCELLED]
+        total:
+          type: integer
+          description: Total harga dalam Rupiah
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
