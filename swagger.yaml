@@ -1,4 +1,12 @@
+swagger: "2.0"
+host: localhost:3000
 basePath: /api/v1
+info:
+  contact: {}
+  description: Virdan Project API Documentation
+  title: Virdan API
+  version: "1.0"
+
 definitions:
   model.UserLoginRequest:
     properties:
@@ -16,19 +24,69 @@ definitions:
       param:
         type: string
     type: object
-host: localhost:3000
-info:
-  contact: {}
-  description: Virdan Project API Documentation
-  title: Virdan API
-  version: "1.0"
+
 paths:
   /auth/login:
     post:
+      tags:
+        - auth
+      summary: Login user
       consumes:
-      - application/json
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - description: Payload
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/model.UserLoginRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserLoginRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ValidationError'
       description: |-
         ## Login Flow
+
+        ### Sequence Diagram
+
+        ```mermaid
+        sequenceDiagram
+            participant C as Client
+            participant S as Server
+            participant DB as Database
+            participant R as Redis
+
+            C->>S: POST /auth/login (email, password)
+            S->>S: Validate Payload
+            S->>DB: Check email exists?
+            alt Email tidak ditemukan
+                DB-->>S: null
+                S-->>C: 404 Not Found
+            else Email ditemukan
+                DB-->>S: User data
+                S->>S: bcrypt.compare(password)
+                alt Password salah
+                    S-->>C: 401 Unauthorized
+                else Password cocok
+                    S->>S: Check account status
+                    alt Akun suspended
+                        S-->>C: 403 Forbidden
+                    else Akun aktif
+                        S->>S: Generate JWT (access + refresh token)
+                        S->>R: Store refresh token (TTL 7 hari)
+                        R-->>S: OK
+                        S-->>C: 200 OK (access_token, refresh_token)
+                    end
+                end
+            end
+        ```
 
         ### Business Logic
         1. Validasi request payload (email & password wajib diisi)
@@ -46,33 +104,6 @@ paths:
         - Rate limit exceeded (terlalu banyak percobaan login) → `429 Too Many Requests`
         - Redis down → login tetap bisa, tapi refresh token tidak disimpan
 
-        ### Flow
-        ```
-        Request → Validate Payload → Check Email → Verify Password → Check Account Status → Generate JWT → Store Refresh Token (Redis) → Response
-        ```
-
         ### Token Info
         - **Access Token** — short-lived (15 menit), dipakai untuk autentikasi request
         - **Refresh Token** — long-lived (7 hari), dipakai untuk generate access token baru
-      parameters:
-      - description: Payload
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/model.UserLoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.UserLoginRequest'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/model.ValidationError'
-      summary: Login user
-      tags:
-      - auth
-swagger: "2.0"
