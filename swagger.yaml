@@ -747,7 +747,7 @@ paths:
       consumes:
         - application/json
       description: |
-        ## Verify OTP Flow
+        ## Verify OTP Flow !
 
         ### Overview
         Verifies the OTP code sent to the user's email during signup. This is step 2 of the multi-step signup process.
