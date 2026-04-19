@@ -1,53 +1,14 @@
-<!doctype html>
 <html>
-  <head>
-    <title>Virdan API</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-  </head>
-  <body>
-    <!-- Inject Mermaid renderer -->
-    <script>
-      (function () {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js";
-        script.onload = () => {
-          mermaid.initialize({ startOnLoad: false, theme: "dark" });
-
-          async function renderMermaidDiagrams() {
-            const blocks = Array.from(document.querySelectorAll("code.language-mermaid"));
-            for (const block of blocks) {
-              if (block.dataset.rendered) continue;
-              const code = block.textContent;
-              try {
-                const id = `mermaid-${Date.now()}-${Math.random().toString(36).substring(2)}`;
-                const { svg } = await mermaid.render(id, code);
-                const container = document.createElement("div");
-                container.innerHTML = svg;
-                block.parentElement.replaceWith(container);
-                block.dataset.rendered = true;
-              } catch (err) {
-                console.error("Mermaid error:", err);
-              }
-            }
-          }
-
-          let debounce;
-          new MutationObserver(() => {
-            clearTimeout(debounce);
-            debounce = setTimeout(renderMermaidDiagrams, 100);
-          }).observe(document.body, { childList: true, subtree: true });
-
-          document.addEventListener("DOMContentLoaded", renderMermaidDiagrams);
-        };
-        document.head.appendChild(script);
-      })();
-    </script>
-
-    <script
-      id="api-reference"
-      data-url="/swagger.yaml">
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-  </body>
+<head>
+  <title>API Docs</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <script
+    id="api-reference"
+    data-url="./swagger.yaml">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
 </html>
