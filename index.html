@@ -1,46 +1,48 @@
+<!doctype html>
 <html>
-<head>
-  <title>API Docs</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-</head>
-<body>
-  <script
-    id="api-reference"
-    data-url="./swagger.yaml">
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-</body>
+  <head>
+    <title>Virdan API</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script
+      id="api-reference"
+      data-url="/docs/swagger.yaml">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 
-<script>
-  // Inject lightbox sederhana untuk image di description
-  const style = document.createElement('style');
-  style.textContent = `
-    .lightbox-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
-      z-index:9999; cursor:zoom-out; align-items:center; justify-content:center;
-    }
-    .lightbox-overlay.active { display:flex; }
-    .lightbox-overlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
-  `;
-  document.head.appendChild(style);
+    <!-- Lightbox -->
+    <script>
+      const style = document.createElement('style');
+      style.textContent = `
+        .lightbox-overlay {
+          display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+          z-index:9999; cursor:zoom-out; align-items:center; justify-content:center;
+        }
+        .lightbox-overlay.active { display:flex; }
+        .lightbox-overlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
+      `;
+      document.head.appendChild(style);
 
-  const overlay = document.createElement('div');
-  overlay.className = 'lightbox-overlay';
-  overlay.innerHTML = '<img id="lightbox-img" />';
-  document.body.appendChild(overlay);
-  overlay.onclick = () => overlay.classList.remove('active');
+      const overlay = document.createElement('div');
+      overlay.className = 'lightbox-overlay';
+      overlay.innerHTML = '<img id="lightbox-img" />';
+      document.body.appendChild(overlay);
+      overlay.onclick = () => overlay.classList.remove('active');
 
-  new MutationObserver(() => {
-    document.querySelectorAll('.description img:not([data-lightbox])').forEach(img => {
-      img.style.cursor = 'zoom-in';
-      img.dataset.lightbox = true;
-      img.onclick = (e) => {
-        e.preventDefault();
-        document.getElementById('lightbox-img').src = img.src;
-        overlay.classList.add('active');
-      };
-    });
-  }).observe(document.body, { childList: true, subtree: true });
-</script>
+      new MutationObserver(() => {
+        document.querySelectorAll('.description img:not([data-lightbox])').forEach(img => {
+          img.style.cursor = 'zoom-in';
+          img.dataset.lightbox = true;
+          img.onclick = (e) => {
+            e.preventDefault();
+            document.getElementById('lightbox-img').src = img.src;
+            overlay.classList.add('active');
+          };
+        });
+      }).observe(document.body, { childList: true, subtree: true });
+    </script>
+
+  </body>
 </html>
